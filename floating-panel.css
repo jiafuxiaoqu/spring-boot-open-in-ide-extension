@@ -1,0 +1,237 @@
+#spring floating panel {
+position: fixed;
+bottom: 16px;
+right: 16px;
+width: 560px;
+max-height: 420px;
+background: #1e1e1e;
+border: 1px solid #3c3c3c;
+border-radius: 8px;
+box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+z-index: 2147483647;
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+font-size: 12px;
+color: #d4d4d4;
+display: flex;
+flex-direction: column;
+overflow: hidden;
+transition: height 0.2s ease;
+}
+#spring floating panel.minimized {
+height: 36px !important;
+}
+#spring floating header {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 6px 12px;
+background: #2d2d2d;
+border-bottom: 1px solid #3c3c3c;
+cursor: move;
+user-select: none;
+flex-shrink: 0;
+}
+#spring floating header h3 {
+margin: 0;
+font-size: 13px;
+color: #d4d4d4;
+}
+.spring header btns {
+display: flex;
+gap: 6px;
+}
+.spring btn {
+background: #007acc;
+border: none;
+color: white;
+padding: 3px 10px;
+border-radius: 4px;
+cursor: pointer;
+font-size: 11px;
+white-space: nowrap;
+font-family: inherit;
+}
+.spring btn:hover {
+background: #005a9e;
+}
+.spring btn.danger {
+background: #dc3545;
+}
+.spring btn.danger:hover {
+background: #b02a37;
+}
+.spring btn.toggle {
+background: #555;
+}
+.spring btn.toggle:hover {
+background: #777;
+}
+#spring floating list {
+overflow-y: auto;
+flex: 1;
+padding: 6px;
+}
+.spring item {
+padding: 6px 8px;
+margin-bottom: 2px;
+background: #2d2d2d;
+border-radius: 4px;
+display: flex;
+align-items: center;
+gap: 8px;
+cursor: pointer;
+}
+.spring item:hover {
+background: #363636;
+}
+.spring item.expanded {
+background: #333;
+}
+.spring method {
+font-weight: bold;
+min-width: 54px;
+padding: 2px 6px;
+border-radius: 3px;
+text-align: center;
+font-size: 11px;
+flex-shrink: 0;
+}
+.spring method-GET {
+background: #0d6efd;
+color: white;
+}
+.spring method-POST {
+background: #198754;
+color: white;
+}
+.spring method-PUT {
+background: #ffca2c;
+color: #000;
+}
+.spring method-DELETE {
+background: #dc3545;
+color: white;
+}
+.spring method-PATCH {
+background: #6f42c1;
+color: white;
+}
+.spring url {
+  flex: 1;
+  word-break: break-all;
+  color: #9cdcfe;
+  overflow: visible;
+  white-space: normal;
+}
+.spring status {
+min-width: 36px;
+text-align: center;
+color: #888;
+flex-shrink: 0;
+}
+.spring dur {
+min-width: 40px;
+text-align: right;
+color: #666;
+font-size: 10px;
+flex-shrink: 0;
+}
+.spring open {
+background: #007acc;
+border: none;
+color: white;
+padding: 3px 10px;
+border-radius: 4px;
+cursor: pointer;
+font-size: 11px;
+white-space: nowrap;
+font-family: inherit;
+flex-shrink: 0;
+}
+.spring open:hover {
+background: #005a9e;
+}
+.spring empty {
+padding: 20px;
+text-align: center;
+color: #888;
+}
+.spring count {
+background: #007acc;
+color: white;
+border-radius: 10px;
+padding: 1px 7px;
+font-size: 11px;
+margin-left: 6px;
+}
+.spring detail {
+display: none;
+background: #252526;
+border: 1px solid #3c3c3c;
+border-radius: 4px;
+margin: 4px 0 6px 0;
+padding: 8px;
+font-size: 11px;
+}
+.spring detail.visible {
+display: block;
+}
+.spring detail pre {
+margin: 4px 0;
+padding: 6px;
+background: #1a1a1a;
+border-radius: 4px;
+overflow-x: auto;
+max-height: 200px;
+overflow-y: auto;
+white-space: pre-wrap;
+word-break: break-all;
+font-family: 'Consolas', 'Courier New', monospace;
+font-size: 11px;
+color: #cecece;
+}
+.spring detail-tab-bar {
+display: flex;
+gap: 0;
+margin-bottom: 6px;
+border-bottom: 1px solid #3c3c3c;
+}
+.spring detail-tab {
+padding: 4px 10px;
+cursor: pointer;
+color: #888;
+border-bottom: 2px solid transparent;
+font-size: 11px;
+}
+.spring detail-tab:hover {
+color: #ccc;
+}
+.spring detail-tab.active {
+color: #d4d4d4;
+border-bottom-color: #007acc;
+}
+.spring detail-section {
+margin-bottom: 6px;
+}
+.spring detail-label {
+color: #569cd6;
+font-weight: bold;
+font-size: 11px;
+margin-bottom: 2px;
+}
+.spring detail-inline {
+display: flex;
+align-items: flex-start;
+gap: 4px;
+margin: 2px 0;
+}
+.spring detail-inline-key {
+color: #9cdcfe;
+min-width: 0;
+word-break: break-all;
+flex-shrink: 0;
+}
+.spring detail-inline-val {
+color: #ce9178;
+word-break: break-all;
+}

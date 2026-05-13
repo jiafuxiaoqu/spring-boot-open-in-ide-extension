@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Spring Boot 请求悬浮窗</title>
+<link rel="stylesheet" href="floating-panel.css">
+<link rel="icon" href="title.jpg" type="image/jpeg">
+</head>
+<body>
+<div id="spring_floating_panel" style="display: flex; flex-direction: column;">
+  <div id="spring_floating_header" style="display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; background: #2d2d2d; border-bottom: 1px solid #3c3c3c; cursor: move; user-select: none;">
+    <h3 style="margin: 0; font-size: 13px; color: #d4d4d4;">
+      <img src="icon.svg" class="floating-icon" style="width:20px;height:20px;vertical-align:middle;margin-right:6px;">
+      Spring Boot 请求 <span id="spring_count" style="display:none;">0</span>
+    </h3>
+    <div class="spring header btns">
+      <button class="spring btn danger" id="spring_clear">清空</button>
+      <button class="spring btn toggle" id="spring_toggle">_</button>
+    </div>
+  </div>
+  <div id="spring_floating_list" style="overflow-y: auto; flex: 1; padding: 6px;">
+    <div class="spring empty">等待请求</div>
+  </div>
+</div>
+<script>
+(() => {
+  const MAX_REQUESTS = 50;
+  const requestDataMap = new Map();
+  let requestId = 0;
+  let addRequestToUIRef = null;
+  const recentRequestKeys = new Map();
+  let pendingRequests = [];
+
+  function enqueueRequest(p) {
+    const id = ++requestId;
+    const data = {
+      id,
+      url: p.url,
+      method: p.method || 'GET',
+      reqBody: p.reqBody,
+      reqHeaders: p.reqHeaders || {},
+      status: p.status,
+      resBody: p.resBody || '',
+      resHeaders: p.resHeaders || {},
+      duration: p.duration,
+      time: new Date().toLocaleTimeString()
+    };
+    const key = `${data.method}|${data.url}|${data.status || ''}`;
+    const now = Date.now();
+    const last = recentRequestKeys.get(key) || 0;
+    if (now - last < 800) return;
+    recentRequestKeys.set(key, now);
+    for (const [oldKey, ts] of recentRequestKeys) {
+      if (now - ts > 5000) recentRequestKeys.delete(oldKey);
+    }
+    requestDataMap.set(id, data);
+    if (addRequestToUIRef) addRequestToUIRef(data);
+    else pendingRequests.push(data);
+  }
+
+  window.addEventListener('message', event => {
+    if (event.source !== window) return;
+    if (event.data && event.data.type === '__spring_ide_request') enqueueRequest(event.data.payload);
+  });
+
+  const panel = document.getElementById('spring_floating_panel');
+  const listEl = document.getElementById('spring_floating_list');
+  const countEl = document.getElementById('spring_count');
+
+  function savePos() {
+    const rect = panel.getBoundingClientRect();
+    chrome.storage.local.set({ __spring_ide_pos: { left: rect.left, top: rect.top } });
+  }
+
+  document.getElementById('spring_toggle').addEventListener('click', () => {
+    panel.classList.toggle('minimized');
+    document.getElementById('spring_toggle').textContent = panel.classList.contains('minimized') ? '□' : '_';
+    chrome.storage.local.set({ __spring_ide_minimized: panel.classList.contains('minimized') });
+  });
+
+  document.getElementById('spring_clear').addEventListener('click', () => {
+    listEl.innerHTML = '<div class="spring empty">等待请求...</div>';
+    requestDataMap.clear();
+    countEl.textContent = '0';
+    countEl.style.display = 'none';
+  });
+
+  const header = document.getElementById('spring_floating_header');
+  let dragging = false, offsetX = 0, offsetY = 0;
+  header.addEventListener('mousedown', e => {
+    if (e.target.tagName === 'BUTTON') return;
+    dragging = true;
+    const rect = panel.getBoundingClientRect();
+    offsetX = e.clientX - rect.left;
+    offsetY = e.clientY - rect.top;
+    panel.style.transition = 'none';
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    panel.style.left = `${e.clientX - offsetX}px`;
+    panel.style.top = `${e.clientY - offsetY}px`;
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+  });
+  document.addEventListener('mouseup', () => {
+    if (!dragging) return;
+    dragging = false;
+    panel.style.transition = '';
+    savePos();
+  });
+
+  function addRequestToUI(data) {
+    console.log('Request added', data);
+  }
+  addRequestToUIRef = addRequestToUI;
+
+  let requestCount = 0;
+  countEl.textContent = requestCount;
+  countEl.style.display = '';
+
+  chrome.storage.local.get(['__spring_ide_pos', '__spring_ide_minimized'], data => {
+    if (data.__spring_ide_pos) {
+      panel.style.left = data.__spring_ide_pos.left;
+      panel.style.top = data.__spring_ide_pos.top;
+    }
+    if (data.__spring_ide_minimized) panel.classList.add('minimized');
+  });
+})();
+</script>
+</body>
+</html>
