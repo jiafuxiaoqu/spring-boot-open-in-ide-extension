@@ -41,6 +41,9 @@
 
 你需要在 Spring Boot 项目中添加对应的 `OpenInIdeController` 来处理这个请求。
 
+## 联系方式
+QQ群：1172212917
+
 ## 注意事项
 
 - 扩展仅在 `http://localhost` 页面上自动注入浮窗
