@@ -99,7 +99,7 @@
  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
  font-size: 12px;
  color: #d4d4d4;
- display: flex;
+ display: none;
  flex-direction: column;
  overflow: hidden;
  transition: width 0.2s ease, height 0.2s ease;
@@ -477,8 +477,8 @@
  `;
     document.body.appendChild(panel);
 
-    // 从 storage 恢复面板位置和最小化状态
-    chrome.storage.local.get(['__spring_ide_pos', '__spring_ide_minimized', '__spring_ide_size'], (data) => {
+    // 从 storage 恢复面板位置、最小化状态和隐藏状态
+    chrome.storage.local.get(['__spring_ide_pos', '__spring_ide_minimized', '__spring_ide_size', '__spring_ide_hidden'], (data) => {
       if (data.__spring_ide_pos && data.__spring_ide_pos.userMoved) {
         panel.style.left = data.__spring_ide_pos.left;
         panel.style.top = data.__spring_ide_pos.top;
@@ -492,6 +492,9 @@
       if (data.__spring_ide_size) {
         panel.style.width = data.__spring_ide_size.width;
         panel.style.height = data.__spring_ide_size.height;
+      }
+      if (!data.__spring_ide_hidden) {
+        panel.style.display = 'flex';
       }
     });
 
@@ -1005,7 +1008,12 @@
       if (msg.type === '__spring_ide_toggle') {
         const el = document.getElementById('__spring_ide_panel');
         if (el) {
-          el.style.display = el.style.display === 'none' ? '' : 'none';
+          const isHidden = el.style.display === 'none';
+          el.style.display = isHidden ? 'flex' : 'none';
+          // 保存隐藏状态到 storage
+          chrome.storage.local.set({
+            __spring_ide_hidden: !isHidden
+          });
         }
       }
     });
