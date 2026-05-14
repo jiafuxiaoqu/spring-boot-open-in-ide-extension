@@ -20,8 +20,6 @@
             return false;
         }
 
-        const localHosts = ['localhost', '127.0.0.1', '[::1]', '::1'];
-        if (!localHosts.includes(parsed.hostname)) return false;
         if (parsed.port === '8090' && parsed.pathname === '/__open_in_idea') return false;
         if (parsed.pathname.startsWith('/static')) return false;
 

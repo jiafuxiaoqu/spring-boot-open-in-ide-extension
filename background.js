@@ -1,9 +1,4 @@
-const REQUEST_URL_FILTERS = [
-  'http://localhost/*',
-  'https://localhost/*',
-  'http://127.0.0.1/*',
-  'https://127.0.0.1/*'
-];
+const REQUEST_URL_FILTERS = ["<all_urls>"];
 
 function shouldCapture(url) {
   let parsed;
