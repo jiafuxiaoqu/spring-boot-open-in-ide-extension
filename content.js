@@ -786,7 +786,25 @@
     function openInIdea(url, method) {
       chrome.storage.local.get(['__spring_ide_cfg'], (data) => {
         const cfg = data.__spring_ide_cfg || {};
-        const backendUrl = cfg.requestUrl || 'http://localhost:8090/__open_in_idea';
+        
+        // 验证 ideaDir 和 ideaName 参数
+        if (!cfg.ideaDir && !cfg.ideaName && !cfg.ideaName) {
+          const tip = document.createElement('div');
+          tip.textContent = '请先在扩展设置中配置 IDEA执行文件目录 或 IDEA执行文件名称 或 请求地址';
+          tip.style.position = 'fixed';
+          tip.style.top = '20px';
+          tip.style.right = '20px';
+          tip.style.padding = '10px 15px';
+          tip.style.background = '#f44336';
+          tip.style.color = '#fff';
+          tip.style.borderRadius = '4px';
+          tip.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+          document.body.appendChild(tip);
+          setTimeout(() => tip.remove(), 3000);
+          return;
+        }
+        
+        const backendUrl = cfg.requestUrl;
         const payload = {
           requestUrl: url,
           method: method,
