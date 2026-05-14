@@ -82,13 +82,18 @@
     style.textContent = `
  #__spring_ide_panel {
  position: fixed;
- bottom: 16px;
- right: 16px;
+ top: 0;
+ right: 0;
  width: 560px;
- max-height: 420px;
+ height: 100vh;
+ max-width: 100vw;
+ max-height: 100vh;
+ min-width: 320px;
+ min-height: 200px;
  background: #1e1e1e;
  border: 1px solid #3c3c3c;
- border-radius: 8px;
+ border-radius: 8px 0 0 8px;
+ box-sizing: border-box;
  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
  z-index: 2147483647;
  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
@@ -97,7 +102,8 @@
  display: flex;
  flex-direction: column;
  overflow: hidden;
- transition: height 0.2s ease;
+ transition: width 0.2s ease, height 0.2s ease;
+ resize: none;
  }
  #__spring_ide_panel.minimized {
  height: 36px !important;
@@ -117,6 +123,19 @@
  margin: 0;
  font-size: 13px;
  color: #d4d4d4;
+ }
+  .__spring_ide_resize_handle {
+ position: absolute;
+ bottom: 0;
+ left: 0;
+ width: 12px;
+ height: 12px;
+ cursor: sw-resize;
+ background: linear-gradient(225deg, transparent 50%, #666 50%);
+ z-index: 1000;
+ }
+  .__spring_ide_resize_handle:hover {
+ background: linear-gradient(225deg, transparent 50%, #007acc 50%);
  }
  .__spring_ide_header_btns {
  display: flex;
@@ -411,6 +430,7 @@
  <div id="__spring_ide_list">
  <div class="__spring_ide_empty">等待请求...</div>
  </div>
+ <div class="__spring_ide_resize_handle"></div>
  <div class="__spring_ide_config_dialog" id="__spring_ide_config_dialog">
  <h4>设置配置</h4>
  <div class="__spring_ide_form_group">
@@ -434,8 +454,8 @@
     document.body.appendChild(panel);
 
     // 从 storage 恢复面板位置和最小化状态
-    chrome.storage.local.get(['__spring_ide_pos', '__spring_ide_minimized'], (data) => {
-      if (data.__spring_ide_pos) {
+    chrome.storage.local.get(['__spring_ide_pos', '__spring_ide_minimized', '__spring_ide_size'], (data) => {
+      if (data.__spring_ide_pos && data.__spring_ide_pos.userMoved) {
         panel.style.left = data.__spring_ide_pos.left;
         panel.style.top = data.__spring_ide_pos.top;
         panel.style.right = 'auto';
@@ -444,6 +464,10 @@
       if (data.__spring_ide_minimized) {
         panel.classList.add('minimized');
         document.getElementById('__spring_ide_toggle').textContent = '□';
+      }
+      if (data.__spring_ide_size) {
+        panel.style.width = data.__spring_ide_size.width;
+        panel.style.height = data.__spring_ide_size.height;
       }
     });
 
@@ -455,7 +479,8 @@
       chrome.storage.local.set({
         __spring_ide_pos: {
           left: panel.style.left,
-          top: panel.style.top
+          top: panel.style.top,
+          userMoved: true
         }
       });
     }
@@ -512,13 +537,14 @@
       const tip = document.createElement('div');
       tip.textContent = '配置保存成功！';
       tip.style.position = 'fixed';
-      tip.style.top = '20px';
+      tip.style.top = '40px';
       tip.style.right = '20px';
       tip.style.padding = '10px 15px';
       tip.style.background = '#4caf50';
       tip.style.color = '#fff';
       tip.style.borderRadius = '4px';
       tip.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+      tip.style.zIndex = '2147483647';
       document.body.appendChild(tip);
       setTimeout(() => tip.remove(), 2000);
     });
@@ -535,8 +561,11 @@
     });
     document.addEventListener('mousemove', (e) => {
       if (!dragging) return;
-      panel.style.left = (e.clientX - offsetX) + 'px';
-      panel.style.top = (e.clientY - offsetY) + 'px';
+      const rect = panel.getBoundingClientRect();
+      const left = Math.min(Math.max(0, e.clientX - offsetX), Math.max(0, window.innerWidth - rect.width));
+      const top = Math.min(Math.max(0, e.clientY - offsetY), Math.max(0, window.innerHeight - rect.height));
+      panel.style.left = left + 'px';
+      panel.style.top = top + 'px';
       panel.style.right = 'auto';
       panel.style.bottom = 'auto';
     });
@@ -546,6 +575,53 @@
       panel.style.transition = '';
       savePos();
     });
+
+    // 调整大小功能
+    const resizeHandle = panel.querySelector('.__spring_ide_resize_handle');
+    let resizing = false, startX = 0, startY = 0, startWidth = 0, startHeight = 0, startRightEdge = 0;
+
+    resizeHandle.addEventListener('mousedown', (e) => {
+      resizing = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      const rect = panel.getBoundingClientRect();
+      startWidth = rect.width;
+      startHeight = rect.height;
+      startRightEdge = rect.right;
+      panel.style.transition = 'none';
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!resizing) return;
+      const rect = panel.getBoundingClientRect();
+      const maxWidth = Math.max(320, startRightEdge);
+      const maxHeight = Math.max(200, window.innerHeight - rect.top);
+      const newWidth = Math.min(maxWidth, Math.max(320, startWidth + startX - e.clientX));
+      const newHeight = Math.min(maxHeight, Math.max(200, startHeight + e.clientY - startY));
+      if (panel.style.right === 'auto') {
+        panel.style.left = Math.max(0, startRightEdge - newWidth) + 'px';
+      }
+      panel.style.width = newWidth + 'px';
+      panel.style.height = newHeight + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!resizing) return;
+      resizing = false;
+      panel.style.transition = '';
+      saveSize();
+    });
+
+    function saveSize() {
+      chrome.storage.local.set({
+        __spring_ide_size: {
+          width: panel.style.width,
+          height: panel.style.height
+        }
+      });
+    }
 
     // ====== 详情面板 ======
     function buildDetailHTML(data) {
@@ -741,7 +817,40 @@
             copyBtn.addEventListener('click', (ev) => {
               ev.stopPropagation();
               const text = preEl.textContent || preEl.innerText;
-              navigator.clipboard.writeText(text).then(() => {
+              
+              // 尝试使用现代的 Clipboard API
+              const copyToClipboard = (text) => {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                  return navigator.clipboard.writeText(text);
+                }
+                
+                // 降级到 document.execCommand
+                return new Promise((resolve, reject) => {
+                  const textArea = document.createElement('textarea');
+                  textArea.value = text;
+                  textArea.style.position = 'fixed';
+                  textArea.style.left = '-999999px';
+                  textArea.style.top = '-999999px';
+                  document.body.appendChild(textArea);
+                  textArea.focus();
+                  textArea.select();
+                  
+                  try {
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    if (successful) {
+                      resolve();
+                    } else {
+                      reject(new Error('document.execCommand 失败'));
+                    }
+                  } catch (err) {
+                    document.body.removeChild(textArea);
+                    reject(err);
+                  }
+                });
+              };
+              
+              copyToClipboard(text).then(() => {
                 const originalText = copyBtn.textContent;
                 copyBtn.textContent = '已复制';
                 copyBtn.style.background = '#198754';
@@ -752,8 +861,10 @@
               }).catch(err => {
                 console.error('复制失败:', err);
                 copyBtn.textContent = '失败';
+                copyBtn.style.background = '#dc3545';
                 setTimeout(() => {
                   copyBtn.textContent = '复制';
+                  copyBtn.style.background = '';
                 }, 1500);
               });
             });
@@ -790,15 +901,16 @@
         // 验证 ideaDir 和 ideaName 参数
         if (!cfg.ideaDir && !cfg.ideaName && !cfg.ideaName) {
           const tip = document.createElement('div');
-          tip.textContent = '请先在扩展设置中配置 IDEA执行文件目录 或 IDEA执行文件名称 或 请求地址';
+          tip.textContent = '请先配置信息内容';
           tip.style.position = 'fixed';
-          tip.style.top = '20px';
+          tip.style.top = '40px';
           tip.style.right = '20px';
           tip.style.padding = '10px 15px';
           tip.style.background = '#f44336';
           tip.style.color = '#fff';
           tip.style.borderRadius = '4px';
           tip.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)';
+          tip.style.zIndex = '2147483647';
           document.body.appendChild(tip);
           setTimeout(() => tip.remove(), 3000);
           return;
