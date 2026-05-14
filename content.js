@@ -523,8 +523,14 @@
       setMinimized(!panel.classList.contains('minimized'));
     });
 
+    let draggedMinimized = false;
+
     panel.addEventListener('click', (e) => {
       if (!panel.classList.contains('minimized')) return;
+      if (draggedMinimized) {
+        draggedMinimized = false;
+        return;
+      }
       if (e.target.closest('.__spring_ide_minimized_icon') || e.target === panel) {
         setMinimized(false);
       }
@@ -586,19 +592,36 @@
 
     // 拖拽
     const header = document.getElementById('__spring_ide_header');
-    let dragging = false, offsetX = 0, offsetY = 0;
-    header.addEventListener('mousedown', (e) => {
+    let dragging = false, offsetX = 0, offsetY = 0, dragStartX = 0, dragStartY = 0;
+    function startDragging(e) {
       if (e.target.tagName === 'BUTTON') return;
       dragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
       offsetX = e.clientX - panel.getBoundingClientRect().left;
       offsetY = e.clientY - panel.getBoundingClientRect().top;
       panel.style.transition = 'none';
+    }
+    header.addEventListener('mousedown', (e) => {
+      startDragging(e);
+    });
+    panel.addEventListener('mousedown', (e) => {
+      if (!panel.classList.contains('minimized')) return;
+      if (!e.target.closest('.__spring_ide_minimized_icon') && e.target !== panel) return;
+      draggedMinimized = false;
+      startDragging(e);
+      e.preventDefault();
     });
     document.addEventListener('mousemove', (e) => {
       if (!dragging) return;
       const rect = panel.getBoundingClientRect();
       const left = Math.min(Math.max(0, e.clientX - offsetX), Math.max(0, window.innerWidth - rect.width));
       const top = Math.min(Math.max(0, e.clientY - offsetY), Math.max(0, window.innerHeight - rect.height));
+      if (panel.classList.contains('minimized')) {
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) draggedMinimized = true;
+      }
       panel.style.left = left + 'px';
       panel.style.top = top + 'px';
       panel.style.right = 'auto';
