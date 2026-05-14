@@ -106,7 +106,30 @@
  resize: none;
  }
  #__spring_ide_panel.minimized {
- height: 36px !important;
+ width: 52px !important;
+ height: 52px !important;
+ min-width: 52px !important;
+ min-height: 52px !important;
+ border-radius: 50%;
+ cursor: pointer;
+ }
+ #__spring_ide_panel.minimized #__spring_ide_header,
+ #__spring_ide_panel.minimized #__spring_ide_list,
+ #__spring_ide_panel.minimized .__spring_ide_resize_handle,
+ #__spring_ide_panel.minimized .__spring_ide_config_dialog {
+ display: none !important;
+ }
+ .__spring_ide_minimized_icon {
+ display: none;
+ width: 100%;
+ height: 100%;
+ padding: 8px;
+ box-sizing: border-box;
+ object-fit: contain;
+ background: #2d2d2d;
+ }
+ #__spring_ide_panel.minimized .__spring_ide_minimized_icon {
+ display: block;
  }
  #__spring_ide_header {
  display: flex;
@@ -419,6 +442,7 @@
     const panel = document.createElement('div');
     panel.id = '__spring_ide_panel';
     panel.innerHTML = `
+ <img class="__spring_ide_minimized_icon" src="${chrome.runtime.getURL('icon.png')}" alt="Spring Boot 请求" title="点击展开 Spring Boot 请求">
  <div id="__spring_ide_header">
  <h3>📡 Spring Boot 请求 <span id="__spring_ide_count" class="__spring_ide_count" style="display:none;">0</span></h3>
  <div class="__spring_ide_header_btns">
@@ -486,13 +510,24 @@
     }
 
     // 最小化/展开
-    document.getElementById('__spring_ide_toggle').addEventListener('click', () => {
-      panel.classList.toggle('minimized');
-      document.getElementById('__spring_ide_toggle').textContent =
-        panel.classList.contains('minimized') ? '□' : '_';
+    function setMinimized(minimized) {
+      panel.classList.toggle('minimized', minimized);
+      document.getElementById('__spring_ide_toggle').textContent = minimized ? '□' : '_';
       chrome.storage.local.set({
-        __spring_ide_minimized: panel.classList.contains('minimized')
+        __spring_ide_minimized: minimized
       });
+    }
+
+    document.getElementById('__spring_ide_toggle').addEventListener('click', (e) => {
+      e.stopPropagation();
+      setMinimized(!panel.classList.contains('minimized'));
+    });
+
+    panel.addEventListener('click', (e) => {
+      if (!panel.classList.contains('minimized')) return;
+      if (e.target.closest('.__spring_ide_minimized_icon') || e.target === panel) {
+        setMinimized(false);
+      }
     });
 
     // 清空
