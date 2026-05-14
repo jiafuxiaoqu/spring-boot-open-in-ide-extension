@@ -935,14 +935,8 @@
 
       wrapper.appendChild(item);
 
-      // 最新的在顶部
-      listEl.insertBefore(wrapper, listEl.firstChild);
-
-      // 限制数量
-      while (listEl.children.length > MAX_REQUESTS) {
-        listEl.removeChild(listEl.lastChild);
-      }
-
+      // 最新的在尾部
+      listEl.appendChild(wrapper);
       requestCount++;
       countEl.textContent = requestCount;
       countEl.style.display = '';
