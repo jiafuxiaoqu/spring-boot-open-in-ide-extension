@@ -4,7 +4,7 @@
   // 防止重复注入
   if (document.getElementById('__spring_ide_panel')) return;
 
-  const MAX_REQUESTS = 50;
+  const MAX_REQUESTS = 5000;
   const requestDataMap = new Map();
   let requestId = 0;
   let addRequestToUIRef = null;
